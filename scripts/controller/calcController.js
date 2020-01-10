@@ -49,16 +49,25 @@ class CalcController {
                 this.clearEntry();
                 break;
             case 'soma':
+                this.addOperation("+");
                 break;
             case 'subtracao':
+                this.addOperation("-");
                 break;
             case 'divisao':
+                this.addOperation("/");
                 break;
             case 'multiplicacao':
+                this.addOperation("*");
                 break;
             case 'porcento':
+                this.addOperation("%");
                 break;
             case 'igual':
+
+                break;
+            case 'ponto':
+                this.addOperation(".");
                 break;
             case '0':
             case '1':
@@ -91,10 +100,89 @@ class CalcController {
     }
 
     addOperation(value) {
-        this._operation.push(value);
+        let lastOperation = this.getLastOperation();
+
+        // isNaN verifica se não é um número
+        if (isNaN(lastOperation)) {
+            if (this.isOperator(value)) {
+                this.setLastOperatio(value);
+            }
+            else if (isNaN(value)) {
+                //deve ser o igual
+            }
+            else {
+                this.pushOperation(value);
+                this.setNumberToDisplay();
+            }
+        } else {
+            if (this.isOperator(value)) {
+                this.pushOperation(value);
+            }
+            else {
+                let newValue = lastOperation.toString() + value.toString();
+                this.setLastOperatio(parseInt(newValue));
+                this.setNumberToDisplay();
+            }
+        }
+
+        console.log(this._operation);
     }
 
+    getLastOperation() {
+        if (this._operation.length >= 1) {
+            return this._operation[this._operation.length - 1];
+        }
 
+        return this._operation;
+    }
+
+    isOperator(value) {
+        // Caso o indexOf não encontre o elemento ele retorna -1, se ele encontrar ele retorna o index do elemento
+        return (["+", "-", "*", "/", "%"].indexOf(value) > -1);
+    }
+
+    setLastOperatio(value) {
+        if (this._operation.length >= 1) {
+            this._operation[this._operation.length - 1] = value;
+        } else {
+            this._operation.push(value);
+        }
+    }
+
+    pushOperation(value) {
+        this._operation.push(value);
+
+        if (this._operation.length > 3) {
+            this.calc();
+        }
+    }
+
+    calc() {
+        let last = this._operation.pop();
+
+        // join junta os valores, o parametro define o separador
+        // eval interpreta uma string como expressão
+        let result = eval(this._operation.join(""));
+        this._operation = [result, last];
+        this.setNumberToDisplay();
+    }
+
+    setNumberToDisplay() {
+        let lastNumber;
+
+        for (let i = this._operation.length - 1; i >= 0; i--) {
+            if (!this.isOperator(this._operation[i])) {
+                lastNumber = this._operation[i];
+                break;
+            }
+        }
+
+        this.displayCalc(lastNumber);
+    }
+
+    displayCalc(value) {
+        this.displayElement.innerHTML = value;
+    }
 
 
 
@@ -104,14 +192,6 @@ class CalcController {
     get displayDateTime() {
         this.dataElement.innerHTML = this.currentDate;
         this.timeElement.innerHTML = this.currentTime;
-    }
-
-    get displayCalc() {
-        return this.displayElement.innerHTML;
-    }
-
-    set displayCalc(value) {
-        this.displayElement.innerHTML = value;
     }
 
     get currentDate() {
