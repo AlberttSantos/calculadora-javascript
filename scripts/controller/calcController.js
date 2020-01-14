@@ -1,5 +1,7 @@
 class CalcController {
     constructor() {
+        this._lastOperator = '';
+        this._lastNumber = '';
         this._operation = [];
         this.dataElement = document.querySelector("#data");
         this.displayElement = document.querySelector("#display");
@@ -64,7 +66,7 @@ class CalcController {
                 this.addOperation("%");
                 break;
             case 'igual':
-
+                this.calc();
                 break;
             case 'ponto':
                 this.addOperation(".");
@@ -89,10 +91,12 @@ class CalcController {
 
     clearAll() {
         this._operation = [];
+        this.setNumberToDisplay();
     }
 
     clearEntry() {
         this._operation.pop();
+        this.setNumberToDisplay();
     }
 
     error() {
@@ -101,7 +105,6 @@ class CalcController {
 
     addOperation(value) {
         let lastOperation = this.getLastOperation();
-
         // isNaN verifica se não é um número
         if (isNaN(lastOperation)) {
             if (this.isOperator(value)) {
@@ -124,8 +127,6 @@ class CalcController {
                 this.setNumberToDisplay();
             }
         }
-
-        console.log(this._operation);
     }
 
     getLastOperation() {
@@ -158,30 +159,70 @@ class CalcController {
     }
 
     calc() {
-        let last = this._operation.pop();
+        let last = '';
+        this._lastOperator = this.getLastItem();
+
+        if (this._operation.length < 3) {
+            let firstNumber = this._operation[0];
+            this._operation = [firstNumber, this._lastOperator, this._lastNumber];
+        }
+
+        if (this._operation.length > 3) {
+            last = this._operation.pop();
+
+            this._lastNumber = this.getResult();
+        }
+        else if (this._operation.length == 3) {
+            this._lastNumber = this.getLastItem(false);
+        }
 
         // join junta os valores, o parametro define o separador
         // eval interpreta uma string como expressão
-        let result = eval(this._operation.join(""));
-        this._operation = [result, last];
+        let result = this.getResult();
+
+        if (last === '%') {
+            result = result / 100;
+        }
+        else {
+            this._operation = [result];
+
+            if (last) this._operation.push(last);
+        }
+
         this.setNumberToDisplay();
     }
 
     setNumberToDisplay() {
-        let lastNumber;
+        let lastNumber = this.getLastItem(false);
 
-        for (let i = this._operation.length - 1; i >= 0; i--) {
-            if (!this.isOperator(this._operation[i])) {
-                lastNumber = this._operation[i];
-                break;
-            }
-        }
+        if (!lastNumber) lastNumber = 0;
 
         this.displayCalc(lastNumber);
     }
 
     displayCalc(value) {
         this.displayElement.innerHTML = value;
+    }
+
+    getResult() {
+        return eval(this._operation.join(""));
+    }
+
+    getLastItem(isOperator = true) {
+        let lastItem;
+
+        for (let i = this._operation.length - 1; i >= 0; i--) {
+            if (this.isOperator(this._operation[i]) == isOperator) {
+                lastItem = this._operation[i];
+                break;
+            }
+        }
+
+        if (!lastItem) {
+            lastItem = isOperator ? this._lastOperator : this.lastNumber;
+        }
+
+        return lastItem;
     }
 
 
